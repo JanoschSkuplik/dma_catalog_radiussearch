@@ -29,6 +29,7 @@ class DMACatalogRadiussearchList extends Frontend
 	
 	public function parseCatalogData($arrCatalog, $objTemplate, $objModule)
 	{
+
 		if ($this->Input->get('latitude') && $this->Input->get('longitude')) 
 		{
 			$arrNewCatalog = array();
@@ -38,8 +39,8 @@ class DMACatalogRadiussearchList extends Frontend
 			
 			foreach ($arrCatalog as $value) 
 			{
-				$dataLat = $value['data']['lat']['value'];
-				$dataLng = $value['data']['lng']['value'];
+				$dataLat = $value['data'][$objModule->dcrFieldCatalogLat]['value'];
+				$dataLng = $value['data'][$objModule->dcrFieldCatalogLng]['value'];
 				
 				$value['distance'] = number_format(6378.388 * acos(sin(deg2rad($getLat)) * sin(deg2rad($dataLat)) + cos(deg2rad($getLat)) * cos(deg2rad($dataLat)) * cos(deg2rad($dataLng) - deg2rad($getLng))), 0, ',', ' ');
 

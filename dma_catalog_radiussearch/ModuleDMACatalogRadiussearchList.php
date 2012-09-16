@@ -66,23 +66,78 @@ class ModuleDMACatalogRadiussearchList extends ModuleCatalogList
 	
 	protected function compile()
 	{
+
+
+		$objAddressField = $this->Database->prepare("SELECT * FROM tl_form_field WHERE id=?")
+																			->limit(1)
+																			->execute($this->dcrFormFieldAddress);
+		$strAddressFieldName = $objAddressField->name;
+		
+		if (!$this->Input->get($strAddressFieldName) && $this->Input->post($strAddressFieldName))
+		{
+			$this->Input->setGet($strAddressFieldName,$this->Input->post($strAddressFieldName));
+		}
+		
+		if ($this->dcrUseLatLng)
+		{
+			$objFormFieldLat = $this->Database->prepare("SELECT * FROM tl_form_field WHERE id=?")
+																			->limit(1)
+																			->execute($this->dcrFormFieldLat);
+			$strFormFieldLat = $objFormFieldLat->name;
+			
+			$objFormFieldLng = $this->Database->prepare("SELECT * FROM tl_form_field WHERE id=?")
+																			->limit(1)
+																			->execute($this->dcrFormFieldLng);
+			$strFormFieldLng = $objFormFieldLng->name;
+			
+			if (!$this->Input->get($strFormFieldLat) && $this->Input->post($strFormFieldLat))
+			{
+				$this->Input->setGet($strFormFieldLat,$this->Input->post($strFormFieldLat));
+			}
+			$this->Input->setGet('latitude',$this->Input->get($strFormFieldLat));
+			if (!$this->Input->get($strFormFieldLng) && $this->Input->post($strFormFieldLng))
+			{
+				$this->Input->setGet($strFormFieldLng,$this->Input->post($strFormFieldLng));
+			}
+			$this->Input->setGet('longitude',$this->Input->get($strFormFieldLng));
+		}
 		
 		// try to get location, if lat/lng isn't set
-		if (!$this->Input->get('latitude') || !$this->Input->get('longitude') && $this->Input->get('location'))
+		if ((!$this->dcrUseLatLng || (!$this->Input->get($strFormFieldLat) || !$this->Input->get($strFormFieldLng))) && $this->Input->get($strAddressFieldName))
 		{
-			$getLocation = $this->formatAddress($this->Input->get('location'));
-			$gmapUrl = 'http://maps.googleapis.com/maps/api/geocode/json?address=' . $getLocation . '&sensor=true';
-			$gmapResponse = @file_get_contents($gmapUrl);
-      		if ($gmapResponse)
-			{
-				$geocodeObject = json_decode($gmapResponse);
-				if ($geocodeObject->status == 'OK')
-				{
 
-         			if ($geocodeObject->results[0]->geometry->location->lat && $geocodeObject->results[0]->geometry->location->lng)
+			if ($this->dcrType == 'dcrUseGoogleMaps')
+			{
+				$getLocation = $this->formatAddress($this->Input->get($strAddressFieldName) . $this->dcrFormFieldAdditional);
+				$gmapUrl = 'http://maps.googleapis.com/maps/api/geocode/json?address=' . $getLocation . '&sensor=true';
+				$gmapResponse = @file_get_contents($gmapUrl);
+      	if ($gmapResponse)
+      	{
+					$geocodeObject = json_decode($gmapResponse);
+					if ($geocodeObject->status == 'OK')
 					{
-						$this->Input->setGet('latitude',$geocodeObject->results[0]->geometry->location->lat);
-						$this->Input->setGet('longitude',$geocodeObject->results[0]->geometry->location->lng);
+						if ($geocodeObject->results[0]->geometry->location->lat && $geocodeObject->results[0]->geometry->location->lng)
+						{
+							$this->Input->setGet('latitude',$geocodeObject->results[0]->geometry->location->lat);
+							$this->Input->setGet('longitude',$geocodeObject->results[0]->geometry->location->lng);
+						}
+					}
+				}
+			}
+			elseif ($this->dcrType == 'dcrUseOpenStreetMaps')
+			{
+				$getLocation = rawurlencode($this->Input->get($strAddressFieldName) . $this->dcrFormFieldAdditional);
+				$osmUrl = 'http://nominatim.openstreetmap.org/search/?q=' . $getLocation . '&format=json&polygon=0&addressdetails=0&limit=1&email=' . rawurlencode($this->dcrOpenStreetMapEmail);
+
+				$osmResponse = @file_get_contents($osmUrl);
+				if ($osmResponse)
+				{
+					$geocodeObject = json_decode($osmResponse);
+
+					if ($geocodeObject[0]->lat && $geocodeObject[0]->lon)
+					{
+						$this->Input->setGet('latitude',$geocodeObject[0]->lat);
+						$this->Input->setGet('longitude',$geocodeObject[0]->lon);
 					}
 				}
 			}
@@ -94,7 +149,10 @@ class ModuleDMACatalogRadiussearchList extends ModuleCatalogList
 			$getLat = $this->Input->get('latitude');
 			$getLng = $this->Input->get('longitude');
 		
-			$this->catalog_order = '(6378.388 * acos(sin(RADIANS(' . $getLat . ')) * sin(RADIANS(lat)) + cos(RADIANS(' . $getLat . ')) * cos(RADIANS(lat)) * cos(RADIANS(lng) - RADIANS(' . $getLng . '))))';
+			if ($this->dcrSortByDistance)
+			{
+				$this->catalog_order = '(6378.388 * acos(sin(RADIANS(' . $getLat . ')) * sin(RADIANS(lat)) + cos(RADIANS(' . $getLat . ')) * cos(RADIANS(lat)) * cos(RADIANS(lng) - RADIANS(' . $getLng . ')))) ' . ($this->dcrSortByDistanceDESC ? 'DESC' : '') . '';
+			}
 		
 			$arrVisible = $this->catalog_visible;
 			$arrVisible[] = 'distance';
@@ -103,7 +161,7 @@ class ModuleDMACatalogRadiussearchList extends ModuleCatalogList
 
 			$GLOBALS['TL_DCA'][$this->strTable]['fields']['distance'] = array(
 				'inputType' => 'text',
-				'label' => array('Entfernung','Entfernung zum Partner')
+				'label' => array('Entfernung','Entfernung')
 			);
 		}
 		parent::compile();
