@@ -151,7 +151,7 @@ class ModuleDMACatalogRadiussearchList extends ModuleCatalogList
 		
 			if ($this->dcrSortByDistance)
 			{
-				$this->catalog_order = '(6378.388 * acos(sin(RADIANS(' . $getLat . ')) * sin(RADIANS(lat)) + cos(RADIANS(' . $getLat . ')) * cos(RADIANS(lat)) * cos(RADIANS(lng) - RADIANS(' . $getLng . ')))) ' . ($this->dcrSortByDistanceDESC ? 'DESC' : '') . '';
+				$this->catalog_order = '(6378.388 * acos(sin(RADIANS(' . $getLat . ')) * sin(RADIANS(' . $this->dcrFieldCatalogLat .')) + cos(RADIANS(' . $getLat . ')) * cos(RADIANS(' . $this->dcrFieldCatalogLat . ')) * cos(RADIANS(' . $this->dcrFieldCatalogLng . ') - RADIANS(' . $getLng . ')))) ' . ($this->dcrSortByDistanceDESC ? 'DESC' : '') . '';
 			}
 		
 			$arrVisible = $this->catalog_visible;
