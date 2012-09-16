@@ -51,6 +51,10 @@ class DMACatalogRadiussearchList extends Frontend
 		return $arrCatalog;
 	}
 
+	public function startDMACatalogRadiusSearch($objModule)
+	{
+		
+	}
 
 }
 

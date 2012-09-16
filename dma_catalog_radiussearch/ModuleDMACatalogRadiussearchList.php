@@ -66,7 +66,15 @@ class ModuleDMACatalogRadiussearchList extends ModuleCatalogList
 	
 	protected function compile()
 	{
-
+		if(is_array($GLOBALS['TL_HOOKS']['startDMACatalogRadiusSearch']) && count($GLOBALS['TL_HOOKS']['startDMACatalogRadiusSearch']))
+		{
+			foreach($GLOBALS['TL_HOOKS']['startDMACatalogRadiusSearch'] as $callback)
+			{
+				$this->import($callback[0]);
+				$this->$callback[0]->$callback[1]($this);
+			}
+		}
+			
 
 		$objAddressField = $this->Database->prepare("SELECT * FROM tl_form_field WHERE id=?")
 																			->limit(1)
@@ -103,7 +111,7 @@ class ModuleDMACatalogRadiussearchList extends ModuleCatalogList
 		}
 		
 		// try to get location, if lat/lng isn't set
-		if ((!$this->dcrUseLatLng || (!$this->Input->get($strFormFieldLat) || !$this->Input->get($strFormFieldLng))) && $this->Input->get($strAddressFieldName))
+		if ((!$this->dcrUseLatLng || (!$this->Input->get('latitude') || !$this->Input->get('longitude'))) && $this->Input->get($strAddressFieldName))
 		{
 
 			if ($this->dcrType == 'dcrUseGoogleMaps')
