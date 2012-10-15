@@ -41,6 +41,6 @@ $GLOBALS['FE_MOD']['catalog']['dma_catalog_radiussearchlist'] = 'ModuleDMACatalo
  * Register Hooks
  */ 
 $GLOBALS['TL_HOOKS']['parseCatalog'][] = array('DMACatalogRadiussearchList', 'parseCatalogData'); 
-$GLOBALS['TL_HOOKS']['startDMACatalogRadiusSearch'][] = array('DMACatalogRadiussearchList','startDMACatalogRadiusSearch');
+//$GLOBALS['TL_HOOKS']['startDMACatalogRadiusSearch'][] = array('DMACatalogRadiussearchList','startDMACatalogRadiusSearch');
 
 ?>
